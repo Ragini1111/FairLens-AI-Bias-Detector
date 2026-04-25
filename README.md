@@ -16,4 +16,4 @@
 2. python bias_check.py
 
 **Tech**: Python, Pandas, Fairlearn, Matplotlib  
-**Built for**: [Hackathon Name] 2026
+**Built for**: [GDG Solution Challenge 2026] 2026
