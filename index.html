@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FairLens: AI Bias Detector</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0A0A0F;
+            color: #fff;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(46, 134, 193, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(231, 76, 60, 0.1) 0%, transparent 40%);
+        }
+
+        /* Anti-gravity floating animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-content {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #E74C3C;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, #fff, #2E86C1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: #A0A0B0;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            animation: float 5s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.3s);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #E74C3C;
+        }
+
+        .stat-label {
+            color: #A0A0B0;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #2E86C1;
+            color: #fff;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: 2px solid #2E86C1;
+        }
+
+        .btn:hover {
+            background: transparent;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(46, 134, 193, 0.3);
+        }
+
+        /* Chart Section */
+        .chart-section {
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .chart-img {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            transition: transform 0.4s ease;
+            animation: float 7s ease-in-out infinite;
+        }
+
+        .chart-img:hover {
+            transform: translateY(-10px) scale(1.02);
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+
+        .step {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateY(-8px);
+            background: rgba(46, 134, 193, 0.1);
+            border-color: #2E86C1;
+        }
+
+        .step-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #2E86C1;
+            opacity: 0.5;
+        }
+
+        footer {
+            padding: 60px 0;
+            text-align: center;
+            color: #A0A0B0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        code {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="badge">HIGH RISK DETECTED</div>
+                <h1>FairLens</h1>
+                <p class="subtitle">Scan any loan AI model for gender & age bias in 2 seconds. Built with Microsoft Fairlearn.</p>
+                
+                <div class="stats">
+                    <div class="stat" style="--i:1">
+                        <div class="stat-number">37.2%</div>
+                        <div class="stat-label">Gender Bias Gap</div>
+                    </div>
+                    <div class="stat" style="--i:2">
+                        <div class="stat-number">13.1%</div>
+                        <div class="stat-label">Age Bias Gap</div>
+                    </div>
+                    <div class="stat" style="--i:3">
+                        <div class="stat-number">10%+</div>
+                        <div class="stat-label">EU AI Act Violation</div>
+                    </div>
+                </div>
+
+                <a href="https://github.com/Ragini1111/[repo-name]" class="btn">View on GitHub</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="chart-section">
+        <div class="container">
+            <h2>Live Bias Detection Output</h2>
+            <p class="subtitle">Actual results from <code>python bias_check.py</code> on German Credit Dataset</p>
+            <img src="bias_chart.png" alt="FairLens Bias Detection Chart" class="chart-img">
+        </div>
+    </section>
+
+    <section class="chart-section">
+        <div class="container">
+            <h2>How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Input Model</h3>
+                    <p>Connect any loan approval AI model + your dataset</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Scan for Bias</h3>
+                    <p>Tests for Gender, Age, Race discrimination using Fairlearn metrics</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Get Risk Score</h3>
+                    <p>Receive instant HIGH/LOW RISK flag + visual chart in terminal</p>
+                </div>
+            <p class="subtitle">Tech Stack: Python | Pandas | Microsoft Fairlearn | Matplotlib</p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>Built for [Hackathon Name] 2026 | <a href="https://github.com/Ragini1111/[repo-name]" style="color:#2E86C1">GitHub Repo</a></p>
+        </div>
+    </footer>
+</body>
+</html>
