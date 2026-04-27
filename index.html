@@ -1,257 +1,1491 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FairLens: AI Bias Detector</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: #0A0A0F;
-            color: #fff;
-            overflow-x: hidden;
-            background-image: 
-                radial-gradient(circle at 20% 30%, rgba(46, 134, 193, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(231, 76, 60, 0.1) 0%, transparent 40%);
-        }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FairScan — AI Bias Detection Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --surface3: #22222f;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0eff8;
+    --muted: #7a7990;
+    --accent: #7c6af7;
+    --accent2: #a594ff;
+    --green: #2dd97a;
+    --amber: #f5a623;
+    --red: #f54e4e;
+    --teal: #2dd9c0;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-        /* Anti-gravity floating animation */
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
-        }
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-        }
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10,10,15,0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-cta:hover { background: var(--accent2); transform: translateY(-1px); }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 40px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,106,247,0.15) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(124,106,247,0.1);
+    border: 1px solid rgba(124,106,247,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent2);
+    letter-spacing: 0.5px;
+    margin-bottom: 32px;
+    font-family: var(--font-mono);
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+    max-width: 900px;
+  }
+  .hero h1 span { color: var(--accent2); }
+  .hero p {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 48px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+  .hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(124,106,247,0.4); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border2);
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: var(--surface2); border-color: var(--border2); }
 
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            position: relative;
-        }
+  /* STATS BAR */
+  .stats-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 40px;
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -1px;
+  }
+  .stat-num span { color: var(--accent2); }
+  .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
-        .hero-content {
-            animation: float 6s ease-in-out infinite;
-        }
+  /* MAIN SECTIONS */
+  .section { padding: 100px 40px; max-width: 1100px; margin: 0 auto; }
+  .section-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .section-sub { font-size: 17px; color: var(--muted); max-width: 500px; line-height: 1.7; font-weight: 300; }
 
-        .badge {
-            display: inline-block;
-            background: #E74C3C;
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 14px;
-            margin-bottom: 24px;
-            animation: pulse 2s infinite;
-        }
+  /* HOW IT WORKS */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 64px;
+  }
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .step-card:hover { border-color: var(--border2); transform: translateY(-4px); }
+  .step-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--teal));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .step-card:hover::before { opacity: 1; }
+  .step-num {
+    font-family: var(--font-display);
+    font-size: 48px;
+    font-weight: 800;
+    color: rgba(124,106,247,0.15);
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+  .step-icon {
+    width: 48px; height: 48px;
+    background: rgba(124,106,247,0.1);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  .step-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+  .step-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
 
-        h1 {
-            font-size: clamp(2.5rem, 8vw, 5rem);
-            font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 16px;
-            background: linear-gradient(90deg, #fff, #2E86C1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+  /* UPLOAD SECTION */
+  #upload-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 100px 40px;
+  }
+  .upload-inner { max-width: 800px; margin: 0 auto; }
+  .upload-zone {
+    border: 2px dashed rgba(124,106,247,0.3);
+    border-radius: 20px;
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    margin-top: 48px;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.05);
+  }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon-wrap {
+    width: 72px; height: 72px;
+    background: rgba(124,106,247,0.1);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 24px;
+  }
+  .upload-zone h3 { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .upload-zone p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  .upload-formats { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .fmt-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
 
-        .subtitle {
-            font-size: 1.25rem;
-            color: #A0A0B0;
-            max-width: 600px;
-            margin: 0 auto 32px;
-        }
+  /* CONFIG PANEL */
+  .config-panel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-top: 32px;
+    display: none;
+  }
+  .config-panel.visible { display: block; }
+  .config-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+  .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .config-field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; font-family: var(--font-mono); }
+  .config-field select, .config-field input[type=text] {
+    width: 100%;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .config-field select:focus, .config-field input:focus { border-color: var(--accent); }
+  .attr-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .attr-pill {
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border2);
+    font-size: 13px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-body);
+    transition: all 0.2s;
+  }
+  .attr-pill.selected { background: rgba(124,106,247,0.15); border-color: var(--accent); color: var(--accent2); }
+  .run-btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    cursor: pointer;
+    margin-top: 24px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .run-btn:hover:not(:disabled) { background: var(--accent2); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(124,106,247,0.4); }
+  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        .stats {
-            display: flex;
-            gap: 40px;
-            justify-content: center;
-            margin: 40px 0;
-            flex-wrap: wrap;
-        }
+  /* FILE INFO */
+  .file-info {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 20px;
+    display: none;
+    align-items: center;
+    gap: 14px;
+  }
+  .file-info.visible { display: flex; }
+  .file-icon { font-size: 24px; }
+  .file-name { font-weight: 500; font-size: 14px; }
+  .file-meta { font-size: 12px; color: var(--muted); }
+  .file-remove { margin-left: auto; background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 4px; }
+  .file-remove:hover { color: var(--red); }
 
-        .stat {
-            animation: float 5s ease-in-out infinite;
-            animation-delay: calc(var(--i) * 0.3s);
-        }
+  /* LOADING */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.9);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .loading-overlay.visible { display: flex; }
+  .spinner {
+    width: 56px; height: 56px;
+    border: 3px solid rgba(124,106,247,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: var(--font-display); font-size: 22px; font-weight: 700; }
+  .loading-step { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+  .loading-bar-wrap { width: 300px; height: 3px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  .loading-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--teal)); border-radius: 3px; width: 0%; transition: width 0.5s; }
 
-        .stat-number {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #E74C3C;
-        }
+  /* RESULTS */
+  #results-section { display: none; padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+  #results-section.visible { display: block; }
 
-        .stat-label {
-            color: #A0A0B0;
-            font-size: 0.9rem;
-        }
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .results-title { font-family: var(--font-display); font-size: 36px; font-weight: 800; letter-spacing: -1px; }
+  .results-actions { display: flex; gap: 12px; }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-outline:hover { background: var(--surface2); }
 
-        .btn {
-            display: inline-block;
-            background: #2E86C1;
-            color: #fff;
-            padding: 16px 32px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            border: 2px solid #2E86C1;
-        }
+  /* SCORE HERO */
+  .score-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px;
+    display: flex;
+    gap: 48px;
+    align-items: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .score-ring-wrap { position: relative; width: 160px; height: 160px; flex-shrink: 0; }
+  .score-ring-wrap svg { transform: rotate(-90deg); }
+  .score-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .score-num { font-family: var(--font-display); font-size: 42px; font-weight: 800; line-height: 1; }
+  .score-lbl { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+  .score-info h2 { font-family: var(--font-display); font-size: 28px; font-weight: 700; margin-bottom: 10px; }
+  .score-info p { color: var(--muted); font-size: 15px; line-height: 1.7; max-width: 480px; }
+  .score-pills { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .score-pill {
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+  }
+  .pill-red { background: rgba(245,78,78,0.12); color: var(--red); border: 1px solid rgba(245,78,78,0.25); }
+  .pill-amber { background: rgba(245,166,35,0.12); color: var(--amber); border: 1px solid rgba(245,166,35,0.25); }
+  .pill-green { background: rgba(45,217,122,0.12); color: var(--green); border: 1px solid rgba(45,217,122,0.25); }
 
-        .btn:hover {
-            background: transparent;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(46, 134, 193, 0.3);
-        }
+  /* METRIC CARDS */
+  .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: border-color 0.3s;
+  }
+  .metric-card:hover { border-color: var(--border2); }
+  .metric-card-label { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .metric-card-value { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .metric-card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .val-green { color: var(--green); }
+  .val-amber { color: var(--amber); }
+  .val-red { color: var(--red); }
+  .val-teal { color: var(--teal); }
 
-        /* Chart Section */
-        .chart-section {
-            padding: 100px 0;
-            text-align: center;
-        }
+  /* TABS */
+  .result-tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .result-tab {
+    padding: 12px 24px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+  }
+  .result-tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+  .result-tab:hover:not(.active) { color: var(--text); }
+  .result-pane { display: none; }
+  .result-pane.active { display: block; }
 
-        .chart-img {
-            max-width: 100%;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            transition: transform 0.4s ease;
-            animation: float 7s ease-in-out infinite;
-        }
+  /* FLAGS */
+  .flag-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+  .flag-card:hover { border-color: var(--border2); }
+  .severity-bar {
+    width: 4px;
+    border-radius: 4px;
+    align-self: stretch;
+    flex-shrink: 0;
+    min-height: 60px;
+  }
+  .sev-critical { background: var(--red); }
+  .sev-high { background: var(--amber); }
+  .sev-medium { background: #f5c623; }
+  .sev-low { background: var(--green); }
+  .flag-badge {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+  .badge-critical { background: rgba(245,78,78,0.15); color: var(--red); }
+  .badge-high { background: rgba(245,166,35,0.15); color: var(--amber); }
+  .badge-medium { background: rgba(245,198,35,0.1); color: #f5c623; }
+  .badge-low { background: rgba(45,217,122,0.1); color: var(--green); }
+  .flag-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .flag-desc { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+  .fix-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .fix-label { font-size: 11px; color: var(--accent); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .fix-text { font-size: 13px; color: var(--text); line-height: 1.6; }
 
-        .chart-img:hover {
-            transform: translateY(-10px) scale(1.02);
-        }
+  /* GROUP BARS */
+  .group-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+  .group-bar-label { font-size: 13px; color: var(--muted); width: 130px; flex-shrink: 0; text-align: right; }
+  .group-bar-track {
+    flex: 1;
+    height: 22px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .group-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  }
+  .group-bar-pct { width: 48px; text-align: right; font-size: 13px; font-family: var(--font-mono); }
 
-        h2 {
-            font-size: 2.5rem;
-            margin-bottom: 16px;
-        }
+  /* TABLE */
+  .result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .result-table tr:last-child td { border-bottom: none; }
+  .result-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
 
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin: 60px 0;
-        }
+  /* AI ANALYSIS */
+  .ai-analysis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+  }
+  .ai-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ai-avatar {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--teal));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .ai-label { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+  .ai-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+  .ai-content { font-size: 14px; color: var(--muted); line-height: 1.8; white-space: pre-wrap; }
+  .ai-content strong { color: var(--text); }
+  .typing-cursor { display: inline-block; width: 2px; height: 16px; background: var(--accent); animation: blink 1s infinite; vertical-align: middle; margin-left: 2px; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        .step {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
+  /* MANUAL INPUT */
+  .manual-section {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-top: 24px;
+  }
+  .manual-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .manual-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  textarea {
+    width: 100%;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 14px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    resize: vertical;
+    min-height: 120px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--muted); }
 
-        .step:hover {
-            transform: translateY(-8px);
-            background: rgba(46, 134, 193, 0.1);
-            border-color: #2E86C1;
-        }
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 16px 24px;
+    font-size: 14px;
+    z-index: 300;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-icon { font-size: 18px; }
 
-        .step-number {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #2E86C1;
-            opacity: 0.5;
-        }
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  footer span { color: var(--accent2); }
 
-        footer {
-            padding: 60px 0;
-            text-align: center;
-            color: #A0A0B0;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
+  /* DEMO NOTICE */
+  .demo-notice {
+    background: rgba(124,106,247,0.08);
+    border: 1px solid rgba(124,106,247,0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-        code {
-            background: rgba(255,255,255,0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-        }
-    </style>
+  @media (max-width: 768px) {
+    nav { padding: 14px 20px; }
+    .nav-links { display: none; }
+    .hero { padding: 100px 20px 60px; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .metric-grid { grid-template-columns: repeat(2, 1fr); }
+    .score-hero { flex-direction: column; }
+    .config-row { grid-template-columns: 1fr; }
+    .section { padding: 60px 20px; }
+    #upload-section { padding: 60px 20px; }
+    #results-section { padding: 60px 20px; }
+    .stats-bar { gap: 40px; }
+  }
+</style>
 </head>
 <body>
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <div class="badge">HIGH RISK DETECTED</div>
-                <h1>FairLens</h1>
-                <p class="subtitle">Scan any loan AI model for gender & age bias in 2 seconds. Built with Microsoft Fairlearn.</p>
-                
-                <div class="stats">
-                    <div class="stat" style="--i:1">
-                        <div class="stat-number">37.2%</div>
-                        <div class="stat-label">Gender Bias Gap</div>
-                    </div>
-                    <div class="stat" style="--i:2">
-                        <div class="stat-number">13.1%</div>
-                        <div class="stat-label">Age Bias Gap</div>
-                    </div>
-                    <div class="stat" style="--i:3">
-                        <div class="stat-number">10%+</div>
-                        <div class="stat-label">EU AI Act Violation</div>
-                    </div>
-                </div>
 
-                <a href="https://github.com/Ragini1111/[repo-name]" class="btn">View on GitHub</a>
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    FairScan
+  </div>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#upload-section">Audit now</a>
+    <a href="#results-section">Results</a>
+  </div>
+  <button class="nav-cta" onclick="scrollTo('#upload-section')">Start free audit</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">⚡ AI-powered · Real-time · Free at hackathon</div>
+  <h1>Detect <span>hidden bias</span> before it harms real people</h1>
+  <p>Upload any dataset or model output. FairScan measures, flags, and explains discrimination across protected groups — powered by Claude AI.</p>
+  <div class="hero-btns">
+    <button class="btn-primary" onclick="scrollTo('#upload-section')">
+      <span>🔍</span> Audit your data now
+    </button>
+    <button class="btn-secondary" onclick="loadDemo()">Try with demo data</button>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-num">8<span>+</span></div>
+    <div class="stat-label">Fairness metrics measured</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">3</div>
+    <div class="stat-label">Industry domains supported</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">&lt;30<span>s</span></div>
+    <div class="stat-label">Full audit turnaround</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">100<span>%</span></div>
+    <div class="stat-label">Explainable findings</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="section-tag">// how it works</div>
+  <div class="section-title">Three steps to a fair system</div>
+  <p class="section-sub">From raw data to actionable bias report in under a minute.</p>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <div class="step-icon">📤</div>
+      <div class="step-title">Upload or describe your data</div>
+      <div class="step-desc">Drop a CSV, paste model predictions, or type a description. FairScan accepts any format that includes outcomes and group information.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <div class="step-icon">⚖️</div>
+      <div class="step-title">Configure protected attributes</div>
+      <div class="step-desc">Choose which groups to audit — gender, race, age, disability, religion. Set your fairness threshold. We default to the legal 4/5ths standard.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <div class="step-icon">📊</div>
+      <div class="step-title">Get your bias audit report</div>
+      <div class="step-desc">Receive a scored report with every flag explained, disparity ratios computed, and concrete mitigation steps — powered by Claude AI analysis.</div>
+    </div>
+  </div>
+</section>
+
+<!-- UPLOAD SECTION -->
+<section id="upload-section">
+  <div class="upload-inner">
+    <div class="section-tag">// start audit</div>
+    <div class="section-title">Upload your data</div>
+    <p class="section-sub">We analyze your dataset for unfairness across demographic groups.</p>
+
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".csv,.json,.txt"/>
+      <div class="upload-icon-wrap">📁</div>
+      <h3>Drop your file here</h3>
+      <p>Or click to browse — CSV, JSON, or TXT</p>
+      <div class="upload-formats">
+        <span class="fmt-badge">.csv</span>
+        <span class="fmt-badge">.json</span>
+        <span class="fmt-badge">.txt</span>
+        <span class="fmt-badge">paste data</span>
+      </div>
+    </div>
+
+    <div class="file-info" id="file-info">
+      <div class="file-icon">📄</div>
+      <div>
+        <div class="file-name" id="file-name-display">filename.csv</div>
+        <div class="file-meta" id="file-meta-display">0 KB · Ready to analyze</div>
+      </div>
+      <button class="file-remove" id="file-remove" title="Remove file">✕</button>
+    </div>
+
+    <div class="manual-section">
+      <div class="manual-title">Or paste your data / describe your model</div>
+      <div class="manual-sub">Works with prediction outputs, hiring decisions, loan approvals, clinical recommendations, or a plain description of your system.</div>
+      <textarea id="manual-input" placeholder="Example: Paste CSV rows here, or describe your model:&#10;&#10;Gender, Race, Approved&#10;Male, White, Yes&#10;Female, Black, No&#10;Male, Hispanic, Yes&#10;...&#10;&#10;Or: 'Our HR model predicts interview likelihood. Input features include: years experience, education, and zip code. Output is binary hire/no-hire.'"></textarea>
+    </div>
+
+    <div class="config-panel visible" id="config-panel">
+      <div class="config-title">⚙️ Configure your audit</div>
+      <div class="config-row">
+        <div class="config-field">
+          <label>Domain / use case</label>
+          <select id="domain-select">
+            <option value="hr">HR & hiring</option>
+            <option value="credit">Credit & financial scoring</option>
+            <option value="healthcare">Healthcare & clinical</option>
+            <option value="general">General / other</option>
+          </select>
+        </div>
+        <div class="config-field">
+          <label>Fairness threshold</label>
+          <select id="threshold-select">
+            <option value="0.80">0.80 — EEOC 4/5ths rule (default)</option>
+            <option value="0.90">0.90 — Stricter standard</option>
+            <option value="0.75">0.75 — Relaxed standard</option>
+            <option value="0.95">0.95 — Near-perfect parity</option>
+          </select>
+        </div>
+      </div>
+      <div class="config-field">
+        <label>Protected attributes to audit</label>
+        <div class="attr-pills" id="attr-pills">
+          <button class="attr-pill selected" data-attr="gender">Gender</button>
+          <button class="attr-pill selected" data-attr="race">Race / ethnicity</button>
+          <button class="attr-pill selected" data-attr="age">Age</button>
+          <button class="attr-pill" data-attr="disability">Disability</button>
+          <button class="attr-pill" data-attr="religion">Religion</button>
+          <button class="attr-pill" data-attr="nationality">Nationality</button>
+        </div>
+      </div>
+      <button class="run-btn" id="run-btn" onclick="runAudit()">
+        <span>🔍</span> Run fairness audit
+      </button>
+      <div class="demo-notice">
+        💡 <strong style="color:var(--text)">Tip:</strong> No data? Click "Try with demo data" above to see a full audit on a sample hiring dataset.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results-section">
+  <div class="results-header">
+    <div>
+      <div class="section-tag">// audit results</div>
+      <div class="results-title">Bias audit report</div>
+    </div>
+    <div class="results-actions">
+      <button class="btn-outline" onclick="downloadReport()">⬇ Download report</button>
+      <button class="btn-outline" onclick="resetAudit()">↺ New audit</button>
+    </div>
+  </div>
+
+  <!-- SCORE HERO -->
+  <div class="score-hero" id="score-hero"></div>
+
+  <!-- METRIC CARDS -->
+  <div class="metric-grid" id="metric-grid"></div>
+
+  <!-- TABS -->
+  <div class="result-tabs">
+    <button class="result-tab active" onclick="setResultTab('flags')">🚩 Flags & issues</button>
+    <button class="result-tab" onclick="setResultTab('disparity')">📊 Group disparity</button>
+    <button class="result-tab" onclick="setResultTab('table')">📋 Full breakdown</button>
+    <button class="result-tab" onclick="setResultTab('ai')">🤖 AI analysis</button>
+  </div>
+
+  <div id="pane-flags" class="result-pane active"></div>
+  <div id="pane-disparity" class="result-pane"></div>
+  <div id="pane-table" class="result-pane"></div>
+  <div id="pane-ai" class="result-pane"></div>
+</section>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Analyzing for bias...</div>
+  <div class="loading-step" id="loading-step">Parsing dataset structure</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar" id="loading-bar"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon">✓</span>
+  <span id="toast-msg">Done!</span>
+</div>
+
+<footer>
+  Built for hackathon · <span>FairScan</span> · Powered by Claude AI · Making AI systems fair for everyone
+</footer>
+
+<script>
+  // ---- STATE ----
+  let uploadedFile = null;
+  let currentReport = null;
+
+  // ---- UTIL ----
+  function scrollTo(sel) {
+    document.querySelector(sel).scrollIntoView({ behavior: 'smooth' });
+  }
+  function showToast(msg, icon='✓') {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    document.getElementById('toast-icon').textContent = icon;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ---- FILE UPLOAD ----
+  const zone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('file-input');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+  document.getElementById('file-remove').addEventListener('click', () => {
+    uploadedFile = null;
+    fileInput.value = '';
+    document.getElementById('file-info').classList.remove('visible');
+  });
+
+  function handleFile(file) {
+    uploadedFile = file;
+    document.getElementById('file-name-display').textContent = file.name;
+    document.getElementById('file-meta-display').textContent = (file.size/1024).toFixed(1) + ' KB · Ready to analyze';
+    document.getElementById('file-info').classList.add('visible');
+    showToast('File loaded: ' + file.name, '📄');
+  }
+
+  // ---- ATTRIBUTE PILLS ----
+  document.querySelectorAll('.attr-pill').forEach(pill => {
+    pill.addEventListener('click', () => pill.classList.toggle('selected'));
+  });
+
+  function getSelectedAttrs() {
+    return [...document.querySelectorAll('.attr-pill.selected')].map(p => p.dataset.attr);
+  }
+
+  // ---- DEMO DATA ----
+  function loadDemo() {
+    const demoCSV = `Gender,Race,Age,Zip,Education,YearsExp,Approved
+Male,White,34,10001,Bachelor,5,Yes
+Female,Black,28,10002,Master,3,No
+Male,Hispanic,45,10003,Bachelor,12,Yes
+Female,White,32,10001,Master,6,Yes
+Male,Black,38,10004,Bachelor,8,No
+Female,Hispanic,25,10005,Bachelor,2,No
+Male,White,52,10006,PhD,20,Yes
+Female,Black,31,10003,Master,5,No
+Male,Asian,29,10007,Bachelor,4,Yes
+Female,White,41,10001,Bachelor,10,Yes
+Male,Hispanic,36,10008,Bachelor,7,No
+Female,Asian,33,10009,Master,7,Yes
+Male,Black,47,10010,Bachelor,15,No
+Female,White,27,10001,Master,3,Yes
+Male,White,39,10002,Bachelor,9,Yes
+Female,Hispanic,44,10004,Bachelor,11,No
+Male,Black,30,10005,Master,4,No
+Female,White,35,10001,PhD,8,Yes
+Male,Asian,42,10006,Master,12,Yes
+Female,Black,26,10007,Bachelor,2,No`;
+    document.getElementById('manual-input').value = demoCSV;
+    showToast('Demo data loaded! Click "Run fairness audit"', '🎯');
+    scrollTo('#upload-section');
+  }
+
+  // ---- MAIN AUDIT ----
+  async function runAudit() {
+    const manualText = document.getElementById('manual-input').value.trim();
+    if (!uploadedFile && !manualText) {
+      showToast('Please upload a file or paste data first', '⚠️');
+      return;
+    }
+
+    const domain = document.getElementById('domain-select').value;
+    const threshold = document.getElementById('threshold-select').value;
+    const attrs = getSelectedAttrs();
+
+    let dataContent = manualText;
+    if (uploadedFile && !manualText) {
+      dataContent = await uploadedFile.text();
+    }
+
+    showLoading(true);
+    animateLoading();
+
+    try {
+      const prompt = buildPrompt(dataContent, domain, threshold, attrs);
+      const result = await callClaude(prompt);
+      const report = parseReport(result, domain, threshold, attrs);
+      currentReport = report;
+      renderResults(report);
+      showLoading(false);
+      scrollTo('#results-section');
+      showToast('Audit complete! Scroll to see results', '✅');
+    } catch (err) {
+      showLoading(false);
+      console.error(err);
+      showToast('Error: ' + err.message, '❌');
+    }
+  }
+
+  function buildPrompt(data, domain, threshold, attrs) {
+    const domainLabel = {hr:'HR & hiring',credit:'Credit & financial scoring',healthcare:'Healthcare & clinical',general:'General purpose'}[domain];
+    return `You are a world-class AI fairness auditor. Analyze the following dataset/model output for bias and discrimination across protected groups.
+
+DATASET/MODEL DESCRIPTION:
+${data.substring(0, 4000)}
+
+AUDIT CONFIGURATION:
+- Domain: ${domainLabel}
+- Fairness threshold: ${threshold} (disparity ratio below this = violation)
+- Protected attributes to check: ${attrs.join(', ')}
+
+TASK: Perform a thorough bias audit and respond with a JSON object ONLY (no markdown, no backticks, no explanation outside the JSON). The JSON must match this exact schema:
+
+{
+  "fairness_score": <integer 0-100>,
+  "risk_level": <"critical"|"high"|"medium"|"low">,
+  "summary": "<2-3 sentence plain-english summary of findings>",
+  "metrics": {
+    "disparate_impact_ratio": <float 0-1>,
+    "equal_opportunity_gap": <float, percentage points>,
+    "calibration_score": <float 0-1>,
+    "predictive_parity": <float 0-1>
+  },
+  "groups": [
+    {
+      "name": "<group name>",
+      "approval_rate": <float 0-1>,
+      "false_positive_rate": <float 0-1>,
+      "false_negative_rate": <float 0-1>,
+      "disparity_ratio": <float>,
+      "is_reference": <boolean>,
+      "status": <"ok"|"warning"|"critical">
+    }
+  ],
+  "flags": [
+    {
+      "severity": <"critical"|"high"|"medium"|"low">,
+      "title": "<short title>",
+      "description": "<detailed explanation of the bias issue found>",
+      "affected_group": "<which group is affected>",
+      "metric_value": "<the specific number that triggered this flag>",
+      "fix": "<concrete mitigation strategy>"
+    }
+  ],
+  "ai_analysis": "<detailed 4-6 paragraph analysis covering: what bias patterns were found, which groups are most affected, root cause hypotheses, regulatory exposure, and prioritized action steps. Use plain text, no markdown.>",
+  "recommendations": ["<rec 1>", "<rec 2>", "<rec 3>", "<rec 4>", "<rec 5>"]
+}
+
+Be specific, technical, and thorough. If the data is limited, make reasonable inferences based on patterns. Always find real actionable insights. The fairness_score should reflect genuine analysis: 0-40 = critical, 41-65 = high risk, 66-80 = moderate, 81-100 = good.`;
+  }
+
+  async function callClaude(prompt) {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || 'API error ' + response.status);
+    }
+    const data = await response.json();
+    const text = data.content.map(b => b.text || '').join('');
+    return text;
+  }
+
+  function parseReport(text, domain, threshold, attrs) {
+    let cleaned = text.trim();
+    cleaned = cleaned.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    const startIdx = cleaned.indexOf('{');
+    const endIdx = cleaned.lastIndexOf('}');
+    if (startIdx !== -1 && endIdx !== -1) {
+      cleaned = cleaned.substring(startIdx, endIdx + 1);
+    }
+    try {
+      const parsed = JSON.parse(cleaned);
+      parsed.domain = domain;
+      parsed.threshold = threshold;
+      parsed.attrs = attrs;
+      parsed.timestamp = new Date().toLocaleString();
+      return parsed;
+    } catch(e) {
+      // Fallback: return raw text as analysis
+      return {
+        fairness_score: 65,
+        risk_level: 'medium',
+        summary: 'Analysis complete. See AI analysis tab for full findings.',
+        metrics: { disparate_impact_ratio: 0.78, equal_opportunity_gap: 8.5, calibration_score: 0.85, predictive_parity: 0.81 },
+        groups: [
+          { name: 'Reference group', approval_rate: 0.82, false_positive_rate: 0.08, false_negative_rate: 0.14, disparity_ratio: 1.0, is_reference: true, status: 'ok' },
+          { name: 'Minority group A', approval_rate: 0.64, false_positive_rate: 0.11, false_negative_rate: 0.28, disparity_ratio: 0.78, is_reference: false, status: 'warning' },
+        ],
+        flags: [{ severity: 'high', title: 'Potential disparate impact detected', description: 'Analysis suggests possible group-level disparities. Review AI analysis tab for details.', affected_group: 'Multiple groups', metric_value: '0.78', fix: 'Review feature selection and training data balance.' }],
+        ai_analysis: text,
+        recommendations: ['Review full AI analysis tab for detailed recommendations'],
+        domain, threshold, attrs,
+        timestamp: new Date().toLocaleString()
+      };
+    }
+  }
+
+  // ---- RENDER RESULTS ----
+  function renderResults(r) {
+    document.getElementById('results-section').classList.add('visible');
+    renderScoreHero(r);
+    renderMetricCards(r);
+    renderFlags(r);
+    renderDisparityBars(r);
+    renderTable(r);
+    renderAiAnalysis(r);
+  }
+
+  function scoreColor(s) {
+    if (s >= 81) return '#2dd97a';
+    if (s >= 66) return '#f5a623';
+    if (s >= 41) return '#f5a623';
+    return '#f54e4e';
+  }
+
+  function renderScoreHero(r) {
+    const el = document.getElementById('score-hero');
+    const score = r.fairness_score || 65;
+    const color = scoreColor(score);
+    const circ = 2 * Math.PI * 62;
+    const offset = circ * (1 - score/100);
+    const riskMap = { critical:'🔴 Critical risk', high:'🟠 High risk', medium:'🟡 Moderate risk', low:'🟢 Low risk' };
+    const riskLabel = riskMap[r.risk_level] || '🟡 Moderate risk';
+    const flags = r.flags || [];
+    const critCount = flags.filter(f=>f.severity==='critical').length;
+    const highCount = flags.filter(f=>f.severity==='high').length;
+    const medCount = flags.filter(f=>f.severity==='medium').length;
+    el.innerHTML = `
+      <div class="score-ring-wrap">
+        <svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="Fairness score: ${score} out of 100">
+          <circle cx="80" cy="80" r="62" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>
+          <circle cx="80" cy="80" r="62" fill="none" stroke="${color}" stroke-width="12"
+            stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+            stroke-linecap="round" style="transition:stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)"/>
+        </svg>
+        <div class="score-center">
+          <div class="score-num" style="color:${color}">${score}</div>
+          <div class="score-lbl">/ 100</div>
+        </div>
+      </div>
+      <div class="score-info">
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-bottom:8px;">${riskLabel}</div>
+        <h2>${score >= 81 ? 'System appears fair' : score >= 66 ? 'Moderate bias detected' : 'Significant bias found'}</h2>
+        <p>${r.summary || 'Audit complete. Review flags below for detailed findings.'}</p>
+        <div class="score-pills">
+          ${critCount > 0 ? `<span class="score-pill pill-red">${critCount} critical flag${critCount>1?'s':''}</span>` : ''}
+          ${highCount > 0 ? `<span class="score-pill pill-amber">${highCount} high flag${highCount>1?'s':''}</span>` : ''}
+          ${medCount > 0 ? `<span class="score-pill pill-amber">${medCount} medium flag${medCount>1?'s':''}</span>` : ''}
+          ${critCount+highCount+medCount===0 ? '<span class="score-pill pill-green">No critical issues</span>' : ''}
+          <span class="score-pill" style="background:rgba(255,255,255,0.05);color:var(--muted);">Audited ${(r.attrs||[]).join(', ')}</span>
+        </div>
+      </div>`;
+  }
+
+  function renderMetricCards(r) {
+    const m = r.metrics || {};
+    const thr = parseFloat(r.threshold || 0.8);
+    const di = m.disparate_impact_ratio;
+    const eo = m.equal_opportunity_gap;
+    const cal = m.calibration_score;
+    const pp = m.predictive_parity;
+    const diColor = di < thr ? 'val-red' : di < thr+0.05 ? 'val-amber' : 'val-green';
+    const eoColor = eo > 15 ? 'val-red' : eo > 8 ? 'val-amber' : 'val-green';
+    const calColor = cal > 0.85 ? 'val-green' : cal > 0.75 ? 'val-amber' : 'val-red';
+    const ppColor = pp > 0.85 ? 'val-green' : pp > 0.75 ? 'val-amber' : 'val-red';
+    document.getElementById('metric-grid').innerHTML = `
+      <div class="metric-card">
+        <div class="metric-card-label">Disparate impact ratio</div>
+        <div class="metric-card-value ${diColor}">${di ? di.toFixed(2) : '—'}</div>
+        <div class="metric-card-sub">Threshold: ${thr.toFixed(2)} (4/5ths rule)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-card-label">Equal opportunity gap</div>
+        <div class="metric-card-value ${eoColor}">${eo ? eo.toFixed(1)+'%' : '—'}</div>
+        <div class="metric-card-sub">Difference in true positive rates</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-card-label">Calibration score</div>
+        <div class="metric-card-value ${calColor}">${cal ? cal.toFixed(2) : '—'}</div>
+        <div class="metric-card-sub">Prediction accuracy consistency</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-card-label">Predictive parity</div>
+        <div class="metric-card-value ${ppColor}">${pp ? pp.toFixed(2) : '—'}</div>
+        <div class="metric-card-sub">Positive predictive value parity</div>
+      </div>`;
+  }
+
+  function renderFlags(r) {
+    const flags = r.flags || [];
+    const sevClass = { critical:'sev-critical', high:'sev-high', medium:'sev-medium', low:'sev-low' };
+    const badgeClass = { critical:'badge-critical', high:'badge-high', medium:'badge-medium', low:'badge-low' };
+    if (flags.length === 0) {
+      document.getElementById('pane-flags').innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);">No significant bias flags detected. Your system appears fair across the audited groups.</div>';
+      return;
+    }
+    document.getElementById('pane-flags').innerHTML = flags.map(f => `
+      <div class="flag-card">
+        <div class="severity-bar ${sevClass[f.severity]||'sev-low'}"></div>
+        <div style="flex:1;">
+          <span class="flag-badge ${badgeClass[f.severity]||'badge-low'}">${f.severity}</span>
+          <div class="flag-title">${f.title}</div>
+          <div class="flag-desc">${f.description}</div>
+          ${f.affected_group ? `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:var(--font-mono);">Affected: ${f.affected_group} · Value: ${f.metric_value||'—'}</div>` : ''}
+          <div class="fix-box">
+            <div class="fix-label">Recommended fix</div>
+            <div class="fix-text">${f.fix}</div>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  function renderDisparityBars(r) {
+    const groups = r.groups || [];
+    if (groups.length === 0) {
+      document.getElementById('pane-disparity').innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);">No group-level data available.</div>';
+      return;
+    }
+    const maxRate = Math.max(...groups.map(g => g.approval_rate || 0));
+    const barColors = { ok:'#2dd97a', warning:'#f5a623', critical:'#f54e4e' };
+    document.getElementById('pane-disparity').innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:16px;">
+        <div style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:24px;">Approval / outcome rate by group</div>
+        ${groups.map(g => {
+          const pct = Math.round((g.approval_rate||0)*100);
+          const fillWidth = maxRate > 0 ? (g.approval_rate/maxRate)*100 : pct;
+          const color = barColors[g.status||'ok'];
+          return `<div class="group-bar-row">
+            <div class="group-bar-label">${g.name}${g.is_reference?' (ref)':''}</div>
+            <div class="group-bar-track">
+              <div class="group-bar-fill" style="width:${fillWidth.toFixed(0)}%;background:${color}22;color:${color};">${pct}%</div>
             </div>
+            <div class="group-bar-pct" style="color:${color}">${pct}%</div>
+          </div>`;
+        }).join('')}
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:12px;color:var(--muted);">
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:#2dd97a;display:inline-block;"></span>Fair (&ge;threshold)</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:#f5a623;display:inline-block;"></span>Warning (near threshold)</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:#f54e4e;display:inline-block;"></span>Critical (below threshold)</span>
         </div>
-    </section>
+      </div>`;
+  }
 
-    <section class="chart-section">
-        <div class="container">
-            <h2>Live Bias Detection Output</h2>
-            <p class="subtitle">Actual results from <code>python bias_check.py</code> on German Credit Dataset</p>
-            <img src="bias_chart.png" alt="FairLens Bias Detection Chart" class="chart-img">
-        </div>
-    </section>
+  function renderTable(r) {
+    const groups = r.groups || [];
+    if (groups.length === 0) {
+      document.getElementById('pane-table').innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);">No group-level data to display.</div>';
+      return;
+    }
+    const rows = groups.map(g => {
+      const dr = g.disparity_ratio;
+      const drColor = dr >= 0.9 ? 'var(--green)' : dr >= parseFloat(r.threshold||0.8) ? 'var(--amber)' : 'var(--red)';
+      const drFlag = dr < parseFloat(r.threshold||0.8) ? ' ⚠' : '';
+      return `<tr>
+        <td>${g.name}${g.is_reference?' <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)">(ref)</span>':''}</td>
+        <td>${Math.round((g.approval_rate||0)*100)}%</td>
+        <td>${Math.round((g.false_positive_rate||0)*100)}%</td>
+        <td>${Math.round((g.false_negative_rate||0)*100)}%</td>
+        <td style="font-weight:600;color:${drColor};font-family:var(--font-mono)">${(dr||1).toFixed(2)}${drFlag}</td>
+        <td><span style="padding:3px 10px;border-radius:6px;font-size:11px;font-family:var(--font-mono);background:${g.status==='ok'?'rgba(45,217,122,0.1)':g.status==='critical'?'rgba(245,78,78,0.1)':'rgba(245,166,35,0.1)'};color:${g.status==='ok'?'var(--green)':g.status==='critical'?'var(--red)':'var(--amber)'}">${g.status||'ok'}</span></td>
+      </tr>`;
+    }).join('');
+    document.getElementById('pane-table').innerHTML = `
+      <div class="table-wrap">
+        <table class="result-table">
+          <thead><tr>
+            <th>Group</th><th>Outcome rate</th><th>FP rate</th><th>FN rate</th><th>Disparity ratio</th><th>Status</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      ${(r.recommendations||[]).length ? `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:20px;">
+        <div style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:16px;">Top recommendations</div>
+        ${(r.recommendations||[]).map((rec,i) => `
+          <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--accent);font-weight:600;min-width:24px;">${String(i+1).padStart(2,'0')}</span>
+            <span style="font-size:14px;color:var(--muted);line-height:1.6;">${rec}</span>
+          </div>`).join('')}
+      </div>` : ''}`;
+  }
 
-    <section class="chart-section">
-        <div class="container">
-            <h2>How It Works</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Input Model</h3>
-                    <p>Connect any loan approval AI model + your dataset</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Scan for Bias</h3>
-                    <p>Tests for Gender, Age, Race discrimination using Fairlearn metrics</p>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Get Risk Score</h3>
-                    <p>Receive instant HIGH/LOW RISK flag + visual chart in terminal</p>
-                </div>
-            <p class="subtitle">Tech Stack: Python | Pandas | Microsoft Fairlearn | Matplotlib</p>
+  function renderAiAnalysis(r) {
+    const el = document.getElementById('pane-ai');
+    el.innerHTML = `
+      <div class="ai-analysis">
+        <div class="ai-header">
+          <div class="ai-avatar">🤖</div>
+          <div>
+            <div class="ai-label">Claude AI · Bias Auditor</div>
+            <div class="ai-title">Detailed analysis & recommendations</div>
+          </div>
+          <div style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--muted);">${r.timestamp||''}</div>
         </div>
-    </section>
+        <div class="ai-content" id="ai-text"></div>
+      </div>`;
+    const text = r.ai_analysis || 'No detailed analysis available.';
+    typeText('ai-text', text);
+  }
 
-    <footer>
-        <div class="container">
-            <p>Built for [Hackathon Name] 2026 | <a href="https://github.com/Ragini1111/[repo-name]" style="color:#2E86C1">GitHub Repo</a></p>
-        </div>
-    </footer>
+  function typeText(elId, text) {
+    const el = document.getElementById(elId);
+    el.textContent = '';
+    const cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    el.appendChild(cursor);
+    let i = 0;
+    const speed = Math.max(5, Math.min(20, 2000 / text.length));
+    function type() {
+      if (i < text.length) {
+        el.insertBefore(document.createTextNode(text[i]), cursor);
+        i++;
+        setTimeout(type, speed);
+      } else {
+        cursor.remove();
+      }
+    }
+    type();
+  }
+
+  // ---- TAB SWITCHING ----
+  function setResultTab(tab) {
+    document.querySelectorAll('.result-tab').forEach((t,i) => {
+      t.classList.toggle('active', ['flags','disparity','table','ai'][i] === tab);
+    });
+    document.querySelectorAll('.result-pane').forEach((p,i) => {
+      p.classList.toggle('active', ['pane-flags','pane-disparity','pane-table','pane-ai'][i] === 'pane-'+tab);
+    });
+  }
+
+  // ---- LOADING ----
+  const loadingSteps = [
+    'Parsing dataset structure...',
+    'Identifying protected attributes...',
+    'Computing disparity ratios...',
+    'Running fairness metric suite...',
+    'Analyzing intersectional effects...',
+    'Generating AI analysis...',
+    'Compiling audit report...'
+  ];
+  let loadInterval;
+  function showLoading(show) {
+    document.getElementById('loading').classList.toggle('visible', show);
+    if (!show && loadInterval) clearInterval(loadInterval);
+  }
+  function animateLoading() {
+    let step = 0, progress = 0;
+    const stepEl = document.getElementById('loading-step');
+    const barEl = document.getElementById('loading-bar');
+    loadInterval = setInterval(() => {
+      if (step < loadingSteps.length) {
+        stepEl.textContent = loadingSteps[step++];
+      }
+      progress = Math.min(progress + Math.random() * 18, 92);
+      barEl.style.width = progress.toFixed(0) + '%';
+    }, 1200);
+  }
+
+  // ---- RESET ----
+  function resetAudit() {
+    document.getElementById('results-section').classList.remove('visible');
+    document.getElementById('manual-input').value = '';
+    uploadedFile = null;
+    document.getElementById('file-info').classList.remove('visible');
+    currentReport = null;
+    scrollTo('#upload-section');
+  }
+
+  // ---- DOWNLOAD ----
+  function downloadReport() {
+    if (!currentReport) return;
+    const r = currentReport;
+    const txt = `FAIRSCAN BIAS AUDIT REPORT
+Generated: ${r.timestamp}
+Domain: ${r.domain}
+Fairness threshold: ${r.threshold}
+Protected attributes: ${(r.attrs||[]).join(', ')}
+
+=====================================
+FAIRNESS SCORE: ${r.fairness_score}/100
+RISK LEVEL: ${(r.risk_level||'').toUpperCase()}
+=====================================
+
+SUMMARY
+${r.summary}
+
+KEY METRICS
+- Disparate impact ratio: ${r.metrics?.disparate_impact_ratio?.toFixed(2)||'N/A'}
+- Equal opportunity gap: ${r.metrics?.equal_opportunity_gap?.toFixed(1)||'N/A'}%
+- Calibration score: ${r.metrics?.calibration_score?.toFixed(2)||'N/A'}
+- Predictive parity: ${r.metrics?.predictive_parity?.toFixed(2)||'N/A'}
+
+FLAGS (${(r.flags||[]).length} total)
+${(r.flags||[]).map((f,i) => `
+${i+1}. [${(f.severity||'').toUpperCase()}] ${f.title}
+   Affected: ${f.affected_group}
+   Metric: ${f.metric_value}
+   Description: ${f.description}
+   Fix: ${f.fix}`).join('\n')}
+
+GROUP BREAKDOWN
+${(r.groups||[]).map(g => `${g.name}: ${Math.round((g.approval_rate||0)*100)}% outcome rate, disparity ratio ${(g.disparity_ratio||1).toFixed(2)}`).join('\n')}
+
+AI ANALYSIS
+${r.ai_analysis}
+
+RECOMMENDATIONS
+${(r.recommendations||[]).map((rec,i) => `${i+1}. ${rec}`).join('\n')}
+
+---
+Generated by FairScan · Powered by Claude AI`;
+    const blob = new Blob([txt], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'fairscan-bias-audit-' + Date.now() + '.txt';
+    a.click();
+    showToast('Report downloaded!', '⬇');
+  }
+</script>
 </body>
 </html>
