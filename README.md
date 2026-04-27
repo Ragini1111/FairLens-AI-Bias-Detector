@@ -19,7 +19,7 @@
 
 **How to Run Locally**:
 ```bash
-git clone https://github.com/your-username/fairlens
+git clone https://github.com/Ragini1111/fairlens
 cd fairlens
 pip install pandas fairlearn matplotlib scikit-learn
 python bias_check.py
