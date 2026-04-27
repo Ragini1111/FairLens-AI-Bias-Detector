@@ -27,7 +27,7 @@ python bias_check.py
 **Core Tech Stack**: Python, Pandas, Fairlearn, Scikit-learn, Matplotlib, Next.js, React, Tailwind CSS
 **Deployment**: Vercel
 **Built for**: Google Solution Challenge 2026 | UN SDG 10: Reduced Inequalities  Live Demo: https://v0-fairscan-ai-bias.vercel.app
-**Demo Video**: [Add your 3-min YouTube link here]
+**Demo Video**: [https://youtu.be/H41J09pR5Pk]
 
 ---
 
