@@ -23,3 +23,16 @@ git clone https://github.com/Ragini1111/fairlens
 cd fairlens
 pip install pandas fairlearn matplotlib scikit-learn
 python bias_check.py
+```
+**Core Tech Stack**: Python, Pandas, Fairlearn, Scikit-learn, Matplotlib, Next.js, React, Tailwind CSS
+**Deployment**: Vercel
+**Built for**: Google Solution Challenge 2026 | UN SDG 10: Reduced Inequalities  Live Demo: https://v0-fairscan-ai-bias.vercel.app
+**Demo Video**: [Add your 3-min YouTube link here]
+
+---
+
+### Development Workflow
+**Development Environment**: GitHub Codespaces  
+**AI-Assisted Development**: Leveraged Gemini CLI and Claude during development for rapid prototyping, debugging, and documentation  
+
+*Note: The final FairLens application runs entirely on open-source Python libraries. No third-party AI API calls are required for the core bias detection functionality.*
